@@ -2,12 +2,12 @@
 #
 # EOF (end-of-file) token is used to indicate that
 # there is no more input left for lexical analysis
-INTEGER, PLUS, EOF = 'INTEGER', 'PLUS', 'EOF'
-
+INTEGER, PLUS, MINUS, EOF = 'INTEGER', 'PLUS', 'MINUS','EOF'
+OP_ADDITION, OP_SUBTRACTION = 'ADDITION', 'SUBTRACTION'
 
 class Token(object):
     def __init__(self, type, value):
-        # token type: INTEGER, PLUS, or EOF
+        # token type: INTEGER, PLUS, MINUS or EOF
         self.type = type
         # token value: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '+', or None
         self.value = value
@@ -73,6 +73,10 @@ class Interpreter(object):
             token = Token(PLUS, current_char)
             self.pos += 1
             return token
+        elif current_char == '-':
+            token = Token(MINUS, current_char)
+            self.pos += 1
+            return token
         elif current_char == ' ':
             # we skip whitespaces
             self.pos += 1
@@ -94,6 +98,7 @@ class Interpreter(object):
         """ar_expr -> INTEGER PLUS INTEGER
             Interprets the arithmetic expression and returns a result
         """
+        operation = OP_ADDITION
         # set current token to the first token taken from the input
         self.current_token = self.get_next_token()
 
@@ -103,7 +108,12 @@ class Interpreter(object):
 
         # we expect the current token to be a '+' token
         op = self.current_token
-        self.validate_and_advance_token(PLUS)
+        try:
+            self.validate_and_advance_token(PLUS)
+        except:
+            # if it throws an error, it means we've been given a subtraction operatior
+            self.validate_and_advance_token(MINUS)
+            operation = OP_SUBTRACTION
 
         # we expect the current token to be a single-digit integer
         right = self.current_token
@@ -111,11 +121,11 @@ class Interpreter(object):
         # after the above call the self.current_token is set to
         # EOF token
 
-        # at this point INTEGER PLUS INTEGER sequence of tokens
-        # has been successfully found and the method can just
-        # return the result of adding two integers, thus
-        # effectively interpreting client input
-        result = left.value + right.value
+        if operation == OP_ADDITION:
+            result = left.value + right.value
+        else:  # operation == OP_SUBTRACTION
+            result = left.value - right.value
+
         return result
 
 

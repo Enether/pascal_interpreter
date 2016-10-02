@@ -4,9 +4,8 @@
 # there is no more input left for lexical analysis
 INTEGER, PLUS, MINUS, MULTIPLICATION, DIVISION, EOF = 'INTEGER', 'PLUS', 'MINUS', 'MULTIPLICATION',\
                                                               'DIVISION','EOF'
-OP_ADDITION, OP_SUBTRACTION = 'ADDITION', 'SUBTRACTION'
 
-class Token(object):
+class Token():
     def __init__(self, type, value):
         # token type: INTEGER, PLUS, MINUS or EOF
         self.type = type
@@ -25,7 +24,7 @@ class Token(object):
         )
 
 
-class Interpreter(object):
+class Lexer():
     def __init__(self, text):
         # client string input, e.g. "3+5"
         self.text = text
@@ -33,27 +32,6 @@ class Interpreter(object):
         self.pos = 0
         # current token instance
         self.current_token = None
-
-    def advance_pos(self):
-        """ increments the pos variable that points where we are in the text"""
-        self.pos += 1
-
-    def error(self):
-        raise Exception('Error parsing input!')
-
-    def read_integer(self, text):
-        """ Reads a multidigit integer from the input """
-        current_char = '0'  # '0' so as to pass the isdigit() test to get in the while loop,
-        # the 0 will be removed once casted to an int
-
-        while current_char.isdigit() and text[self.pos].isdigit():
-            current_char += text[self.pos]
-            self.advance_pos()
-            if self.pos == len(text):
-                break
-
-        return int(current_char)
-
 
     def get_next_token(self):
         """Scanner
@@ -92,9 +70,36 @@ class Interpreter(object):
         elif current_char == ' ':
             # we skip whitespaces
             self.advance_pos()
-            return self.get_next_token()
+            return self.get_next_token()  # recursion until we get to a character that's not a whitespace
 
         self.error()
+
+    def read_integer(self, text):
+        """ Reads a multidigit integer from the input """
+        current_char = '0'  # '0' so as to pass the isdigit() test to get in the while loop,
+        # the 0 will be removed once casted to an int
+
+        while current_char.isdigit() and text[self.pos].isdigit():
+            current_char += text[self.pos]
+            self.advance_pos()
+            if self.pos == len(text):
+                break
+
+        return int(current_char)
+
+    def advance_pos(self):
+        """ increments the pos variable that points where we are in the text"""
+        self.pos += 1
+
+    def error(self):
+        raise Exception('Error parsing input!')
+
+
+class Interpreter():
+    def __init__(self, text):
+        # current token instance
+        self.current_token = None
+        self.lexer = Lexer(text)
 
     def validate_and_advance_token(self, token_type):
         # compare the current token type with the passed token
@@ -102,16 +107,19 @@ class Interpreter(object):
         # and assign the next token to the self.current_token,
         # otherwise raise an exception.
         if self.current_token.type == token_type:
-            self.current_token = self.get_next_token()
+            self.current_token = self.lexer.get_next_token()
         else:
             self.error()
+
+    def error(self):
+        raise Exception('Error parsing input!')
 
     def ar_expr(self):
         """ar_expr -> INTEGER PLUS INTEGER
             Interprets the arithmetic expression and returns a result
         """
         # set current token to the first token taken from the input
-        self.current_token = self.get_next_token()
+        self.current_token = self.lexer.get_next_token()
 
         # we expect the current token to be an integer
         left = self.current_token
@@ -125,7 +133,6 @@ class Interpreter(object):
         get the operator and the right token. We also use recursion to further continue the expression if it's not as
         simple as 3 + 3
         """
-
         operation = self.current_token.type  # 'PLUS or MINUS'
 
         if operation == PLUS:

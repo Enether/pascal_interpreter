@@ -113,11 +113,21 @@ class Interpreter(object):
         # set current token to the first token taken from the input
         self.current_token = self.get_next_token()
 
-        # we expect the current token to be a single-digit integer
+        # we expect the current token to be an integer
         left = self.current_token
         self.validate_and_advance_token(INTEGER)
 
+        return self.continue_ar_expr(left)
+
+    def continue_ar_expr(self, left: Token):
+        """
+        This function continues the arithmetic expression with a given left token, what we're left to do is
+        get the operator and the right token. We also use recursion to further continue the expression if it's not as
+        simple as 3 + 3
+        """
+
         operation = self.current_token.type  # 'PLUS or MINUS'
+
         if operation == PLUS:
             self.validate_and_advance_token(PLUS)
         elif operation == MINUS:  # operation == MINUS
@@ -129,7 +139,7 @@ class Interpreter(object):
 
         right = self.current_token
         self.validate_and_advance_token(INTEGER)
-        # after the above call the self.current_token is set to EOF token
+        # after the above call, the token might be set to EOF (end of file) or another operator
 
         if operation == PLUS:
             result = left.value + right.value
@@ -140,6 +150,10 @@ class Interpreter(object):
         else:  # operation == DIVISION
             # we're processing integers so we'll use integer division
             result = left.value // right.value
+
+        if self.current_token.type != EOF:  # if we haven't reached the end
+            # we need to continue the expression
+            return self.continue_ar_expr(Token(INTEGER, result))
 
         return result
 

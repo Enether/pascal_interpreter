@@ -133,15 +133,17 @@ class Interpreter():
         get the operator and the right token. We also use recursion to further continue the expression if it's not as
         simple as 3 + 3
         """
-        operation = self.current_token.type  # 'PLUS or MINUS'
-
-        if operation == PLUS:
+        operation = self.current_token.type  # 'PLUS, MINUS, MULTIPLICATION, DIVISION, EOF'
+        if operation == EOF:
+            # we've reached the end of the expression, there's no further math to do
+            return left.value
+        elif operation == PLUS:
             self.validate_and_advance_token(PLUS)
         elif operation == MINUS:  # operation == MINUS
             self.validate_and_advance_token(MINUS)
         elif operation == MULTIPLICATION:
             self.validate_and_advance_token(MULTIPLICATION)
-        else:  # operation == DIVISION
+        elif operation == DIVISION:  # operation == DIVISION
             self.validate_and_advance_token(DIVISION)
 
         right = self.current_token
@@ -149,20 +151,17 @@ class Interpreter():
         # after the above call, the token might be set to EOF (end of file) or another operator
 
         if operation == PLUS:
-            result = left.value + right.value
+            # we use recUrSiOn
+            result = left.value + self.continue_ar_expr(Token(INTEGER, right.value))
         elif operation == MINUS:
-            result = left.value - right.value
+            result = left.value + self.continue_ar_expr(Token(INTEGER, -right.value))
         elif operation == MULTIPLICATION:
             result = left.value * right.value
         else:  # operation == DIVISION
             # we're processing integers so we'll use integer division
             result = left.value // right.value
 
-        if self.current_token.type != EOF:  # if we haven't reached the end
-            # we need to continue the expression
-            return self.continue_ar_expr(Token(INTEGER, result))
-
-        return result
+        return self.continue_ar_expr(Token(INTEGER, result))
 
 
 def main():

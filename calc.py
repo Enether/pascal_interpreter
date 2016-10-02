@@ -2,7 +2,8 @@
 #
 # EOF (end-of-file) token is used to indicate that
 # there is no more input left for lexical analysis
-INTEGER, PLUS, MINUS, EOF = 'INTEGER', 'PLUS', 'MINUS','EOF'
+INTEGER, PLUS, MINUS, MULTIPLICATION, DIVISION, EOF = 'INTEGER', 'PLUS', 'MINUS', 'MULTIPLICATION',\
+                                                              'DIVISION','EOF'
 OP_ADDITION, OP_SUBTRACTION = 'ADDITION', 'SUBTRACTION'
 
 class Token(object):
@@ -33,6 +34,10 @@ class Interpreter(object):
         # current token instance
         self.current_token = None
 
+    def advance_pos(self):
+        """ increments the pos variable that points where we are in the text"""
+        self.pos += 1
+
     def error(self):
         raise Exception('Error parsing input!')
 
@@ -43,7 +48,7 @@ class Interpreter(object):
 
         while current_char.isdigit() and text[self.pos].isdigit():
             current_char += text[self.pos]
-            self.pos += 1
+            self.advance_pos()
             if self.pos == len(text):
                 break
 
@@ -70,15 +75,23 @@ class Interpreter(object):
             return Token(INTEGER, self.read_integer(text))
         elif current_char == '+':
             token = Token(PLUS, current_char)
-            self.pos += 1
+            self.advance_pos()
             return token
         elif current_char == '-':
             token = Token(MINUS, current_char)
-            self.pos += 1
+            self.advance_pos()
+            return token
+        elif current_char == '/':
+            token = Token(DIVISION, current_char)
+            self.advance_pos()
+            return token
+        elif current_char == '*':
+            token = Token(MULTIPLICATION, current_char)
+            self.advance_pos()
             return token
         elif current_char == ' ':
             # we skip whitespaces
-            self.pos += 1
+            self.advance_pos()
             return self.get_next_token()
 
         self.error()
@@ -107,8 +120,12 @@ class Interpreter(object):
         operation = self.current_token.type  # 'PLUS or MINUS'
         if operation == PLUS:
             self.validate_and_advance_token(PLUS)
-        else:  # operation == MINUS
+        elif operation == MINUS:  # operation == MINUS
             self.validate_and_advance_token(MINUS)
+        elif operation == MULTIPLICATION:
+            self.validate_and_advance_token(MULTIPLICATION)
+        else:  # operation == DIVISION
+            self.validate_and_advance_token(DIVISION)
 
         right = self.current_token
         self.validate_and_advance_token(INTEGER)
@@ -116,8 +133,13 @@ class Interpreter(object):
 
         if operation == PLUS:
             result = left.value + right.value
-        else:  # operation == MINUS
+        elif operation == MINUS:
             result = left.value - right.value
+        elif operation == MULTIPLICATION:
+            result = left.value * right.value
+        else:  # operation == DIVISION
+            # we're processing integers so we'll use integer division
+            result = left.value // right.value
 
         return result
 

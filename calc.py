@@ -73,6 +73,10 @@ class Interpreter(object):
             token = Token(PLUS, current_char)
             self.pos += 1
             return token
+        elif current_char == ' ':
+            # we skip whitespaces
+            self.pos += 1
+            return self.get_next_token()
 
         self.error()
 

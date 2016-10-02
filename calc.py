@@ -36,6 +36,20 @@ class Interpreter(object):
     def error(self):
         raise Exception('Error parsing input!')
 
+    def read_integer(self, text):
+        """ Reads a multidigit integer from the input """
+        current_char = '0'  # '0' so as to pass the isdigit() test to get in the while loop,
+        # the 0 will be removed once casted to an int
+
+        while current_char.isdigit() and text[self.pos].isdigit():
+            current_char += text[self.pos]
+            self.pos += 1
+            if self.pos == len(text):
+                break
+
+        return int(current_char)
+
+
     def get_next_token(self):
         """Scanner
 
@@ -57,18 +71,7 @@ class Interpreter(object):
         # index to point to the next character after the digit,
         # and return the INTEGER token
         if current_char.isdigit():
-            token = None  # temporarily
-            while current_char.isdigit():
-                token = Token(INTEGER, int(current_char))
-                self.pos += 1
-
-                if self.pos == len(text):
-                    break
-
-                current_char += text[self.pos]
-
-            return token
-
+            return Token(INTEGER, self.read_integer(text))
         elif current_char == '+':
             token = Token(PLUS, current_char)
             self.pos += 1

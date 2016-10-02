@@ -52,7 +52,6 @@ class Interpreter(object):
 
     def get_next_token(self):
         """Scanner
-
         This method is responsible for breaking a sentence
         apart into tokens. One token at a time.
         """
@@ -66,10 +65,7 @@ class Interpreter(object):
         # get a character at the position self.pos and decide what token to create based on the single character
         current_char = text[self.pos]
 
-        # if the character is a digit then convert it to integer, create an INTEGER token,
-        # go in a loop, incrementing self.pos and acquiring all the digits of the integer
-        # index to point to the next character after the digit,
-        # and return the INTEGER token
+        # if the character is a digit then convert it to integer using the read_integer func, create an INTEGER token,
         if current_char.isdigit():
             return Token(INTEGER, self.read_integer(text))
         elif current_char == '+':
@@ -101,32 +97,26 @@ class Interpreter(object):
         """ar_expr -> INTEGER PLUS INTEGER
             Interprets the arithmetic expression and returns a result
         """
-        operation = OP_ADDITION
         # set current token to the first token taken from the input
         self.current_token = self.get_next_token()
 
         # we expect the current token to be a single-digit integer
         left = self.current_token
-        self.validate_and_advance_token(INTEGER)  # validate_and_advance_token compares the current token with the expected token and goes to the next one if valid
+        self.validate_and_advance_token(INTEGER)
 
-        # we expect the current token to be a '+' token
-        op = self.current_token
-        try:
+        operation = self.current_token.type  # 'PLUS or MINUS'
+        if operation == PLUS:
             self.validate_and_advance_token(PLUS)
-        except:
-            # if it throws an error, it means we've been given a subtraction operatior
+        else:  # operation == MINUS
             self.validate_and_advance_token(MINUS)
-            operation = OP_SUBTRACTION
 
-        # we expect the current token to be a single-digit integer
         right = self.current_token
         self.validate_and_advance_token(INTEGER)
-        # after the above call the self.current_token is set to
-        # EOF token
+        # after the above call the self.current_token is set to EOF token
 
-        if operation == OP_ADDITION:
+        if operation == PLUS:
             result = left.value + right.value
-        else:  # operation == OP_SUBTRACTION
+        else:  # operation == MINUS
             result = left.value - right.value
 
         return result

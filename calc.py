@@ -52,16 +52,24 @@ class Interpreter(object):
         # get a character at the position self.pos and decide what token to create based on the single character
         current_char = text[self.pos]
 
-        # if the character is a digit then convert it to
-        # integer, create an INTEGER token, increment self.pos
+        # if the character is a digit then convert it to integer, create an INTEGER token,
+        # go in a loop, incrementing self.pos and acquiring all the digits of the integer
         # index to point to the next character after the digit,
         # and return the INTEGER token
         if current_char.isdigit():
-            token = Token(INTEGER, int(current_char))
-            self.pos += 1
+            token = None  # temporarily
+            while current_char.isdigit():
+                token = Token(INTEGER, int(current_char))
+                self.pos += 1
+
+                if self.pos == len(text):
+                    break
+
+                current_char += text[self.pos]
+
             return token
 
-        if current_char == '+':
+        elif current_char == '+':
             token = Token(PLUS, current_char)
             self.pos += 1
             return token

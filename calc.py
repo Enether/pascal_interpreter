@@ -2,8 +2,8 @@
 #
 # EOF (end-of-file) token is used to indicate that
 # there is no more input left for lexical analysis
-INTEGER, PLUS, MINUS, MULTIPLICATION, DIVISION, EOF = 'INTEGER', 'PLUS', 'MINUS', 'MULTIPLICATION',\
-                                                              'DIVISION','EOF'
+INTEGER, PLUS, MINUS, MULTIPLICATION, DIVISION, EOF, OPEN_BRACKET, CLOSING_BRACKET\
+    = 'INTEGER', 'PLUS', 'MINUS', 'MULTIPLICATION', 'DIVISION','EOF', 'OPEN_BRACKET', 'CLOSING_BRACKET'
 
 class Token():
     def __init__(self, type, value):
@@ -67,6 +67,14 @@ class Lexer():
             token = Token(MULTIPLICATION, current_char)
             self.advance_pos()
             return token
+        elif current_char in '()':
+            if current_char == '(':
+                token = Token(OPEN_BRACKET, current_char)
+            else:
+                token = Token(CLOSING_BRACKET, current_char)
+
+            self.advance_pos()
+            return token
         elif current_char == ' ':
             # we skip whitespaces
             self.advance_pos()
@@ -100,6 +108,8 @@ class Interpreter():
         # current token instance
         self.current_token = None
         self.lexer = Lexer(text)
+        self.open_brackets = 0
+        self.closed_brackets = 0
 
     def validate_and_advance_token(self, token_type):
         # compare the current token type with the passed token
@@ -123,9 +133,17 @@ class Interpreter():
 
         # we expect the current token to be an integer
         left = self.current_token
+        if left.type == OPEN_BRACKET:
+            self.open_brackets += 1
+            return self.ar_expr()
         self.validate_and_advance_token(INTEGER)
 
-        return self.continue_ar_expr(left)
+        result = self.continue_ar_expr(left)
+
+        if self.open_brackets != self.closed_brackets:
+            self.error()
+
+        return result
 
     def continue_ar_expr(self, left: Token):
         """
@@ -134,6 +152,7 @@ class Interpreter():
         simple as 3 + 3
         """
         operation = self.current_token.type  # 'PLUS, MINUS, MULTIPLICATION, DIVISION, EOF'
+        
         if operation == EOF:
             # we've reached the end of the expression, there's no further math to do
             return left.value
@@ -147,11 +166,21 @@ class Interpreter():
             self.validate_and_advance_token(DIVISION)
 
         right = self.current_token
-        self.validate_and_advance_token(INTEGER)
+        if right.type == INTEGER:
+            self.validate_and_advance_token(INTEGER)
+        elif right.type == OPEN_BRACKET:
+            #self.validate_and_advance_token(OPEN_BRACKET)
+            self.open_brackets += 1
+            right_value = self.ar_expr()  # evaluate the expression in the brackets as a new expression altogether
+            right = Token(INTEGER, right_value)
+        elif right.type == CLOSING_BRACKET:
+            self.validate_and_advance_token(CLOSING_BRACKET)
+            self.closed_brackets += 1
+            return left.value
         # after the above call, the token might be set to EOF (end of file) or another operator
 
         if operation == PLUS:
-            # we use recUrSiOn
+            # we use recursion
             result = left.value + self.continue_ar_expr(Token(INTEGER, right.value))
         elif operation == MINUS:
             result = left.value + self.continue_ar_expr(Token(INTEGER, -right.value))
